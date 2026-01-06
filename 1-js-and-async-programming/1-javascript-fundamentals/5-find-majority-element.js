@@ -19,6 +19,23 @@ findMajorityElement([1, 2, 3, 4, 5]); // Expected output: null
 
 */
 
-const findMajorityElement = (arr) => {};
+
+
+const findMajorityElement = (arr) => {
+    const counter = {}
+    arr.forEach((num) => {
+        counter[num] = (counter[num] || 0) + 1;
+    })
+    let majorityElement = null
+    let majorityCounter = 0
+    const minLength = Math.floor(arr.length / 2)
+    Object.keys(counter).forEach((key) => {
+        if(counter[key] > minLength && counter[key] > majorityCounter){
+            majorityCounter = counter[key]
+            majorityElement = Number(key)
+        }
+    })
+    return majorityElement
+};
 
 module.exports = findMajorityElement;
