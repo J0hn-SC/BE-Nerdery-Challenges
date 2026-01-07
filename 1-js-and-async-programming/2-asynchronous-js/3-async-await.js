@@ -11,6 +11,8 @@
     - Make sure to return a string containing the name of the most common subscription
 */
 
+const { getUserSubscriptionByUserId, getUsers, getLikedMovies, getDislikedMovies } = require("./utils/mocked-api");
+
 /**
  * Logs the most common subscription among users
  * who disliked more movies than they liked.
@@ -19,6 +21,31 @@
  */
 const getCommonDislikedSubscription = async () => {
   // Add your code here
+  let users = await getUsers()
+  let likedMovies = await getLikedMovies()
+  let dislikedMovies = await getDislikedMovies()
+
+  let harshUsers = users.filter((user) => {
+    let dislikedMoviesCount = dislikedMovies.find( movie => movie.userId === user.id)?.movies.length || 0
+    let likedMoviesCount = likedMovies.find( movie => movie.userId === user.id)?.movies.length || 0
+    return dislikedMoviesCount > likedMoviesCount
+  })
+
+  let userSubscriptions = await Promise.all( harshUsers.map((user) => {
+    return getUserSubscriptionByUserId(user.id)
+  }))
+
+  const countedSubscriptions = userSubscriptions.reduce((accu, val) => {
+    accu[val.subscription] = ( accu[val.subscription] || 0) + 1
+    return accu
+  }, {})
+
+  const commonSubscription = Object.keys(countedSubscriptions).reduce((result, value) => {
+    return countedSubscriptions[result] > countedSubscriptions[value] ? result : value
+  });
+
+  return Promise.resolve(commonSubscription)
+
 };
 
 getCommonDislikedSubscription().then((subscription) => {
