@@ -30,10 +30,13 @@ const getUsersWithMoreDislikedMoviesThanLikedMovies = () => {
   // Add your code here
   return Promise.all([getUsers(), getLikedMovies(),  getDislikedMovies()]).then(([users, likedMovies, dislikedMovies]) => {
     return users.filter((user) => {
-      let likedMoviesCount = likedMovies.find(movie => movie.userId === user.id).movies.length
-      let dislikedMoviesCount = dislikedMovies.find(movie => movie.userId === user.id).movies.length
+      let likedMoviesCount = likedMovies.find(movie => movie.userId === user.id)?.movies.length || 0
+      let dislikedMoviesCount = dislikedMovies.find(movie => movie.userId === user.id)?.movies.length || 0
       return dislikedMoviesCount > likedMoviesCount
     })
+  }).catch(error => {
+    console.log(error)
+    throw error
   })
 };
 

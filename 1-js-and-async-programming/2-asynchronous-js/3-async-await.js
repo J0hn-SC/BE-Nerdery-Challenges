@@ -21,31 +21,37 @@ const { getUserSubscriptionByUserId, getUsers, getLikedMovies, getDislikedMovies
  */
 const getCommonDislikedSubscription = async () => {
   // Add your code here
-  let users = await getUsers()
-  let likedMovies = await getLikedMovies()
-  let dislikedMovies = await getDislikedMovies()
+  try{
+    const [users, likedMovies, dislikedMovies] = await Promise.all([
+      getUsers(),
+      getLikedMovies(),
+      getDislikedMovies()
+    ]);
 
-  let harshUsers = users.filter((user) => {
-    let dislikedMoviesCount = dislikedMovies.find( movie => movie.userId === user.id)?.movies.length || 0
-    let likedMoviesCount = likedMovies.find( movie => movie.userId === user.id)?.movies.length || 0
-    return dislikedMoviesCount > likedMoviesCount
-  })
+    let harshUsers = users.filter((user) => {
+      let dislikedMoviesCount = dislikedMovies.find( movie => movie.userId === user.id)?.movies.length || 0
+      let likedMoviesCount = likedMovies.find( movie => movie.userId === user.id)?.movies.length || 0
+      return dislikedMoviesCount > likedMoviesCount
+    })
+    
+    let userSubscriptions = await Promise.all( harshUsers.map((user) => {
+      return getUserSubscriptionByUserId(user.id)
+    }))
 
-  let userSubscriptions = await Promise.all( harshUsers.map((user) => {
-    return getUserSubscriptionByUserId(user.id)
-  }))
+    const countedSubscriptions = userSubscriptions.reduce((accu, val) => {
+      accu[val.subscription] = ( accu[val.subscription] || 0) + 1
+      return accu
+    }, {})
 
-  const countedSubscriptions = userSubscriptions.reduce((accu, val) => {
-    accu[val.subscription] = ( accu[val.subscription] || 0) + 1
-    return accu
-  }, {})
+    const commonSubscription = Object.keys(countedSubscriptions)?.reduce((result, value) => {
+      return countedSubscriptions[result] > countedSubscriptions[value] ? result : value
+    });
 
-  const commonSubscription = Object.keys(countedSubscriptions).reduce((result, value) => {
-    return countedSubscriptions[result] > countedSubscriptions[value] ? result : value
-  });
-
-  return Promise.resolve(commonSubscription)
-
+    return commonSubscription
+  }catch(error){
+    console.log(error)
+    throw error
+  }
 };
 
 getCommonDislikedSubscription().then((subscription) => {
