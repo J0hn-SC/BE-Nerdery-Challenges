@@ -22,6 +22,20 @@ const makeRequest = require("./utils/make-requests");
 
 const makeRequestWithRetries = (attempts) => {
   // TODO: Implement the function to make a request and retry if it fails
+  function recursiveRequest(attempt = 0) {
+    makeRequest(attempt, (error, result) => {
+      if(error){
+        if(attempt !== attempts){
+          recursiveRequest(attempt+1)
+        }else{
+          console.log("All attempts failed.")
+        }
+      }else{
+        console.log(result)
+      }
+    })
+  }
+  recursiveRequest()
 };
 
 makeRequestWithRetries(10);
