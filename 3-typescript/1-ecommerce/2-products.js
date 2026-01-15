@@ -1,3 +1,4 @@
+"use strict";
 /**
  * Products - Challenge 1: Product Price Analysis
  *
@@ -18,37 +19,18 @@
  *
  *
  **/
-
-import { readJsonFile } from "./utils/read-json.util";
-import { Product } from './1-types';
-
-async function analyzeProductPrices(products: Product[]): Promise<any> {
-  const totalPrice : number = products.reduce((accu, product) => accu + product.price , 0)
-  const averagePrice : number = Number((totalPrice / (products.length)).toFixed(2))
-  const mostExpensiveProduct : Product = products.reduce((expensiveProduct, product) => product.price > expensiveProduct.price ? product : expensiveProduct)
-  const cheapestProduct : Product = products.reduce((expensiveProduct, product) => product.price < expensiveProduct.price ? product : expensiveProduct)
-  const onSaleCount : number = products.filter((product) => product.onSale).length
-  const averageDiscount : number = (
-    products.filter((product) => product.onSale)
-    .map((product) => (product.price - product.salePrice) * 100 / product.price)
-    .reduce((accu, discountPercentage) => accu + discountPercentage, 0)
-  ) / products.length
-  return {
-    totalPrice,
-    averagePrice,
-    mostExpensiveProduct,
-    cheapestProduct,
-    onSaleCount,
-    averageDiscount
-  }
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+function analyzeProductPrices(products) {
+    return __awaiter(this, void 0, void 0, function* () { });
 }
-
-const main = async () => {
-  const products : Product[] = await readJsonFile<Product>('./data/products.json')
-  console.log(await analyzeProductPrices(products))
-}
-
-main()
 /**
  *  Challenge 2: Build a Product Catalog with Brand Metadata
  *
@@ -62,14 +44,11 @@ main()
   - If a product’s brandId does not match any active brand, it should be excluded.
   - The brandInfo field should include the rest of the brand metadata (name, logo, description, etc.).
  */
-
-async function buildProductCatalog(
-  products: unknown[],
-  brands: unknown[],
-): Promise<unknown[]> {
-  return [];
+function buildProductCatalog(products, brands) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return [];
+    });
 }
-
 /**
  * Challenge 3: One image per product
  *
@@ -83,11 +62,9 @@ async function buildProductCatalog(
  * - The function should return an array of Product objects with the modified images array.
  * - Use proper TypeScript typing for parameters and return values.
  */
-
-async function filterProductsWithOneImage(
-  products: unknown[],
-): Promise<unknown[]> {
-  // Implement the function logic here
-
-  return [];
+function filterProductsWithOneImage(products) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Implement the function logic here
+        return [];
+    });
 }
