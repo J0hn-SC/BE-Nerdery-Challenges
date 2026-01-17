@@ -22,7 +22,32 @@
 
 // Add here your solution
 
+// type Omit<Type, Keys extends keyof any> = Pick<Type, Exclude<keyof Type, Keys>>;
+
+type OmitByType<Type, U> = {
+  [K in keyof Type as Type[K] extends U ? never : K]: Type[K];
+};
+
 // Add here your example
+
+type UserWithoutBooleans = OmitByType<{
+  name: string;
+  count: number;
+  isReadonly: boolean;
+  isEnable: boolean;
+}, boolean>;
+
+const userWithoutBooleans1 : UserWithoutBooleans = {
+    name: "Paolo",
+    count: 5
+}
+
+// Error because has isReadonly property that is boolean type
+// const userWithoutBooleans2 : UserWithoutBooleans = {
+//     name: "Paolo",
+//     count: 5,
+//     isReadonly: true
+// }
 
 /**
  * Exercise #2: Implement the utility type `If<C, T, F>`, which evaluates a condition `C`
@@ -41,7 +66,17 @@
 
 // Add here your solution
 
+type If<C extends boolean, T, F> =  C extends true ? T : F;
+
 // Add here your example
+type A = If<true, 'a', 'b'>;
+type B = If<false, 'a', 'b'>;
+
+const condition1 : A = 'a'
+const condition2 : B = 'b'
+// Error because type B retun If with false so just can return 'b'
+// const condition3 : B = 'a'
+
 
 /**
  * Exercise #3: Recreate the built-in `Readonly<T>` utility type without using it.
@@ -67,7 +102,24 @@
 
 // Add here your solution
 
+type MyReadonly<Object> = {
+  readonly [property in keyof Object]: Object[property];
+};
+
 // Add here your example
+
+type User = {
+  name: string;
+  age: number;
+}
+
+const user: MyReadonly<User> = {
+  name: "Pedro",
+  age: 15
+};
+
+// Error because age is a readonly property
+//user.age = 18
 
 /**
  * Exercise #4: Recreate the built-in `ReturnType<T>` utility type without using it.
@@ -89,7 +141,33 @@
 
 // Add here your solution
 
+// type MyReturnType<Type extends (...args: any) => any> = Type extends (
+//   ...args: any
+// ) => infer Return
+//   ? Return
+//   : any;
+
+type MyReturnType<Type extends (...args: any) => any> = Type extends (...args: any) => infer Return ? Return : never
+
 // Add here your example
+
+const fn = (v: boolean) => {
+    if (v) {
+        return 1;
+    } else {
+        return 2;
+    }
+};
+
+type returnTypeFn = MyReturnType<typeof fn>;
+
+const returnType1: returnTypeFn = 1;
+const returnType2: returnTypeFn = 2;
+
+// Error because fn function can just return 1 | 2
+// const returnType3: returnTypeFn = 3;
+
+
 
 /**
  * Exercise #5: Extract the type inside a wrapped type like `Promise`.
@@ -107,7 +185,14 @@
 
 // Add here your solution
 
+type MyAwaited<T> = T extends Promise<infer Return> ? MyAwaited<Return> : T;
+
 // Add here your example
+
+const myAwaited1 : MyAwaited<Promise<Promise<string>>> = "Es un string"
+// Error because it should return a string not number
+// const myAwaited2 : MyAwaited<Promise<Promise<string>>> = 15
+const myAwaited3 : MyAwaited<Promise<Promise<null>>> = null
 
 /**
  * Exercise 6: Create a utility type `RequiredByKeys<T, K>` that makes specific keys of `T` required.
@@ -132,4 +217,34 @@
 
 // Add here your solution
 
+type RequiredByKeys<T, K extends keyof T = keyof T> = 
+// K extends null ? Required<T> : {[property in K]-? : T[property]} & {[property in Exclude<keyof T,K>] : T[property]}
+K extends null ? Required<T> :  Omit<T, K> & {[property in K]-? : T[property]}
+
 // Add here your example
+
+type UserWithSomeOptional = {
+  id?: number
+  name: string
+  age?: number
+}
+
+type UserWithSomeRequiredByKeys = RequiredByKeys<UserWithSomeOptional, 'id'>;
+type UserWithAllRequiredByKeys = RequiredByKeys<UserWithSomeOptional>;
+
+const user1 : UserWithSomeRequiredByKeys = {
+    id: 6611,
+    name: "asda"
+}
+
+const user2 : UserWithAllRequiredByKeys = {
+    id: 55,
+    name: "asdad",
+    age: 5515
+}
+
+// Error because doesn't have name property
+// const user3 : UserWithAllRequiredByKeys = {
+//     id: 55,
+//     age: 5515
+// }

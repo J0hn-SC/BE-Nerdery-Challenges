@@ -28,27 +28,74 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const read_json_util_1 = require("./utils/read-json.util");
 function analyzeProductPrices(products) {
-    return __awaiter(this, void 0, void 0, function* () { });
-}
-/**
- *  Challenge 2: Build a Product Catalog with Brand Metadata
- *
- * Create a function that takes arrays of Product and Brand, and returns a new array of enriched product entries. Each entry should include brand details embedded into the product, under a new brandInfo property (excluding the id and isActive fields).
- *  e.g
- *  buildProductCatalog(products: Product[], brands: Brand[]): EnrichedProduct[]
-
-  Requirements:
-  - it should return an array of enriched product entries with brand details
-  - Only include products where isActive is true and their corresponding brand is also active.
-  - If a product’s brandId does not match any active brand, it should be excluded.
-  - The brandInfo field should include the rest of the brand metadata (name, logo, description, etc.).
- */
-function buildProductCatalog(products, brands) {
     return __awaiter(this, void 0, void 0, function* () {
-        return [];
+        const totalPrice = products.reduce((accu, product) => accu + product.price, 0);
+        const averagePrice = Number((totalPrice / (products.length)).toFixed(2));
+        const mostExpensiveProduct = products.reduce((expensiveProduct, product) => product.price > expensiveProduct.price ? product : expensiveProduct);
+        const cheapestProduct = products.reduce((expensiveProduct, product) => product.price < expensiveProduct.price ? product : expensiveProduct);
+        const onSaleCount = products.filter((product) => product.onSale).length;
+        const averageDiscount = (products.filter((product) => product.onSale)
+            .map((product) => (product.price - product.salePrice) * 100 / product.price)
+            .reduce((accu, discountPercentage) => accu + discountPercentage, 0)) / products.length;
+        return {
+            totalPrice,
+            averagePrice,
+            mostExpensiveProduct,
+            cheapestProduct,
+            onSaleCount,
+            averageDiscount
+        };
     });
 }
+// async function buildProductCatalog(
+//   products: Product[],
+//   brands: Brand[],
+// ): Promise<EnrichedProduct[]> {
+//   const activeBrandsIds = brands.filter(brand => brand.isActive).map(brand => brand.id)
+//   return products.filter((product) => product.isActive && activeBrandsIds.includes(product.brandId)).map(product => {
+//     const brandInfoByProduct = brands.find(brand => brand.id === product.brandId)!
+//     const {id, isActive, ...brandInfo} = brandInfoByProduct
+//     return {
+//       ...product,
+//       brandInfo: brandInfo
+//     }
+//   })
+// }
+// optimized
+function buildProductCatalog(products, brands) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const activeBrandsMap = new Map();
+        for (const brand of brands) {
+            if (brand.isActive) {
+                const { id, isActive } = brand, brandInfo = __rest(brand, ["id", "isActive"]);
+                activeBrandsMap.set(Number(id), brandInfo);
+            }
+        }
+        return products
+            .filter(product => product.isActive && activeBrandsMap.has(product.brandId))
+            .map(product => (Object.assign(Object.assign({}, product), { brandInfo: activeBrandsMap.get(product.brandId) })));
+    });
+}
+const main2 = () => __awaiter(void 0, void 0, void 0, function* () {
+    const products = yield (0, read_json_util_1.readJsonFile)('./data/products.json');
+    const brands = yield (0, read_json_util_1.readJsonFile)('./data/brands.json');
+    console.log(yield buildProductCatalog(products, brands));
+});
+main2();
 /**
  * Challenge 3: One image per product
  *
@@ -62,9 +109,32 @@ function buildProductCatalog(products, brands) {
  * - The function should return an array of Product objects with the modified images array.
  * - Use proper TypeScript typing for parameters and return values.
  */
+// async function filterProductsWithOneImage(
+//   products: Product[],
+// ): Promise<Product[]> {
+//   // Implement the function logic here
+//   return products.filter((product) => product.images.length > 0).map((product) => {
+//     return {
+//       ...product,
+//       images: [{...product.images[0]}]
+//     }
+//   })
+// }
+//optimized
 function filterProductsWithOneImage(products) {
     return __awaiter(this, void 0, void 0, function* () {
         // Implement the function logic here
-        return [];
+        const filteredProducts = [];
+        for (const product of products) {
+            if (product.images.length > 0) {
+                filteredProducts.push(Object.assign(Object.assign({}, product), { images: [Object.assign({}, product.images[0])] }));
+            }
+        }
+        return filteredProducts;
     });
 }
+// const main3 = async () => {
+//   const products : Product[] = await readJsonFile<Product>('./data/products.json')
+//   console.log(await filterProductsWithOneImage(products))
+// }
+// main3()
