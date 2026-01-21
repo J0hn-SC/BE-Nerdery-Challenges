@@ -11,6 +11,10 @@
 
 -- your query here
 
+select c.name, count(fc.film_id) from public.film_category fc 
+inner join category c on c.category_id = fc.category_id 
+group by c."name"
+
 
  /*
     Challenge 2.
@@ -23,7 +27,12 @@
 
  -- your query here
 
-
+select c.first_name, c.last_name, sum(p.amount) as total_spent
+from public.customer c 
+inner join public.payment p on p.customer_id = c.customer_id 
+group by (c.first_name, c.last_name)
+order by total_spent desc
+limit 5;
 
 
 /*
@@ -38,6 +47,14 @@
 
 -- your query here
 
+select f.title from public.film f
+where exists (
+select * from rental r
+inner join inventory i on r.inventory_id  = i.inventory_id 
+where f.film_id = i.film_id 
+and r.rental_date >= CURRENT_DATE - INTERVAL '10 years'
+)
+
 
 /*
     Challenge 4.
@@ -50,7 +67,13 @@
 
 -- your query here
 
-
+select f.title, i.inventory_id from public.film f
+inner join public.inventory i on i.film_id = f.film_id  
+where not exists (
+select 1 from rental r 
+where i.inventory_id = r.inventory_id  
+and r.rental_date >= CURRENT_DATE - INTERVAL '10 years'
+)
 
 
 /*
@@ -65,6 +88,25 @@
 
 -- your query here
 
+select f.title, count(r.rental_id)
+from public.film f 
+inner join inventory i 
+on i.film_id = f.film_id 
+inner join rental r 
+on r.inventory_id = i.inventory_id 
+group by f.film_id , f.title
+having count(r.rental_id) > (
+	select avg(counts.cnt) 
+	from (
+		select count(rental_id) as cnt 
+		from inventory i2 
+		join rental r2 
+		on r2.inventory_id = i2.inventory_id
+		GROUP BY i2.film_id
+	) counts 
+);
+
+
 /*
     Challenge 6.
     Write a SQL query that calculates rental activity for each customer.
@@ -77,6 +119,16 @@
 
 -- your query here
 
+select c.first_name, c.last_name, 
+min(r.rental_date) first_rental, 
+max(r.rental_date) last_rental,
+max(r.rental_date)::date - min(r.rental_date)::date as rental_span_days
+from customer c 
+inner join rental r on r.customer_id = c.customer_id
+group by(c.customer_id, c.first_name, c.last_name)
+order by rental_span_days desc;
+
+
 /*
     Challenge 7.
     Find all customers who have not rented movies from every available genre.
@@ -86,6 +138,14 @@
 
 
 -- your query here
+
+select c.first_name, c.last_name from customer c
+left join rental r on c.customer_id = r.customer_id
+left join inventory i on r.inventory_id = i.inventory_id
+left join film_category fc on i.film_id = fc.film_id 
+group by (c.customer_id, c.first_name, c.last_name)
+having count(distinct(fc.category_id)) < (select count(*) from category)
+
 
 
 /*
