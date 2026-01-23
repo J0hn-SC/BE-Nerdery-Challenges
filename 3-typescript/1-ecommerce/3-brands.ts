@@ -1,3 +1,5 @@
+import { Brand, Product } from './1-types';
+import { readJsonFile } from './utils/read-json.util';
 /**
  *  Challenge 4: Get Countries with Brands and Amount of Products
  *
@@ -12,10 +14,65 @@
  * - The return should be a type that allow us to define the country name as a key and the amount of products as a value.
  */
 
-async function getCountriesWithBrandsAndProductCount(
-  brands: unknown[],
-  products: unknown[],
-): Promise<unknown> {
-  // Implement the function logic here
-  return;
+
+type NumberOfProductsByCountry = {
+  country: string,
+  productsByCountryCount: number
 }
+
+// async function getCountriesWithBrandsAndProductCount(
+//   brands: Brand[],
+//   products: Product[],
+// ): Promise<unknown> {
+//   const countrys : string[] = [...new Set(brands.map((brand) => brand.headquarters.split(', ')[1]))]
+//   return countrys.map((country) => {
+//     const countryBrandIds = brands.filter((brand) => brand.headquarters.split(', ')[1] === country).map((brand) => Number(brand.id))
+//     const counterProductsbyCountry = products.filter(product => countryBrandIds.includes(product.brandId)).length
+//     return {
+//       country,
+//       counterProductsbyCountry
+//     }
+//   })
+// }
+
+// optimized
+
+async function getCountriesWithBrandsAndProductCount(
+  brands: Brand[],
+  products: Product[],
+): Promise<NumberOfProductsByCountry[]> {
+
+  const countProductsByBrand = new Map<number, number>()
+
+  for(const product of products){
+    let countProductByBrand : number = countProductsByBrand.get(product.brandId) ?? 0
+    countProductsByBrand.set(product.brandId, countProductByBrand + 1)
+  }
+
+  const countProductsByCountry = new Map<string, number>()
+  
+  for(const brand of brands){
+    let countProductByBrand : number = countProductsByBrand.get(Number(brand.id)) ?? 0
+    const country = brand.headquarters.split(', ')[1]
+
+    if (!country) continue;
+
+    let productsByCountry = countProductsByCountry.get(country) ?? 0
+    countProductsByCountry.set(country, countProductByBrand + productsByCountry)
+  }
+
+  return Array.from(countProductsByCountry.entries()).map(([country, count]) => {
+    return {
+      country: country,
+      productsByCountryCount: count
+    };
+  });
+}
+
+const main = async () => {
+  const brands : Brand[] = await readJsonFile<Brand>('./data/brands.json')
+  const products : Product[] = await readJsonFile<Product>('./data/products.json')
+  console.log(await getCountriesWithBrandsAndProductCount(brands, products))
+}
+
+main()

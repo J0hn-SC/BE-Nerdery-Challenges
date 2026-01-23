@@ -19,7 +19,59 @@
  *
  **/
 
-async function analyzeProductPrices(products: any[]): Promise<any> {}
+import { readJsonFile } from "./utils/read-json.util";
+import { Brand, Product } from './1-types';
+
+type ProductAnalysis = {
+  totalPrice: number
+  averagePrice : number
+  mostExpensiveProduct : Product
+  cheapestProduct : Product
+  onSaleCount: number
+  averageDiscount: number
+}
+
+async function analyzeProductPrices(products: Product[]): Promise<ProductAnalysis> {
+  if (products.length === 0) {
+    throw new Error("Products array cannot be empty")
+  }
+  let totalPrice = 0
+  let mostExpensiveProduct : Product = products[0];
+  let cheapestProduct : Product = products[0];
+  let onSaleCount = 0
+  let totalDiscount = 0
+  for(const product of products){
+    totalPrice += product.price
+
+    if(mostExpensiveProduct.price < product.price){
+      mostExpensiveProduct = product
+    }
+
+    if(cheapestProduct.price > product.price){
+      cheapestProduct = product
+    }
+
+    if(product.onSale){
+      onSaleCount++;
+      let disccount = ( product.price - product.salePrice ) * 100 / product.price
+      totalDiscount += disccount
+    }
+  }
+
+  const averageDiscount = onSaleCount > 0 ? totalDiscount / onSaleCount : 0
+  const averagePrice : number = Number((totalPrice / (products.length)).toFixed(2))
+
+  return {
+    totalPrice,
+    averagePrice,
+    mostExpensiveProduct,
+    cheapestProduct,
+    onSaleCount,
+    averageDiscount
+  }
+}
+
+
 
 /**
  *  Challenge 2: Build a Product Catalog with Brand Metadata
@@ -35,12 +87,51 @@ async function analyzeProductPrices(products: any[]): Promise<any> {}
   - The brandInfo field should include the rest of the brand metadata (name, logo, description, etc.).
  */
 
+type BrandInfo = Omit<Brand, "id" | "isActive">
+type EnrichedProduct = Product & { brandInfo : BrandInfo }
+
+// async function buildProductCatalog(
+//   products: Product[],
+//   brands: Brand[],
+// ): Promise<EnrichedProduct[]> {
+//   const activeBrandsIds = brands.filter(brand => brand.isActive).map(brand => brand.id)
+//   return products.filter((product) => product.isActive && activeBrandsIds.includes(product.brandId)).map(product => {
+//     const brandInfoByProduct = brands.find(brand => brand.id === product.brandId)!
+//     const {id, isActive, ...brandInfo} = brandInfoByProduct
+//     return {
+//       ...product,
+//       brandInfo: brandInfo
+//     }
+//   })
+// }
+
+
+// optimized
+
 async function buildProductCatalog(
-  products: unknown[],
-  brands: unknown[],
-): Promise<unknown[]> {
-  return [];
+  products: Product[],
+  brands: Brand[],
+): Promise<EnrichedProduct[]> {
+  const activeBrandsMap = new Map<number, BrandInfo>();
+
+  for (const brand of brands) {
+    if (brand.isActive) {
+      const { id, isActive, ...brandInfo } = brand;
+      activeBrandsMap.set(Number(id), brandInfo);
+    }
+  }
+  
+  const enrichedProducts : EnrichedProduct[] = [];
+  for(const product of products){
+    if(product.isActive && activeBrandsMap.has(product.brandId))
+    enrichedProducts.push({
+      ...product,
+      brandInfo: activeBrandsMap.get(product.brandId)! 
+    })
+  }
+  return enrichedProducts
 }
+
 
 /**
  * Challenge 3: One image per product
@@ -56,10 +147,33 @@ async function buildProductCatalog(
  * - Use proper TypeScript typing for parameters and return values.
  */
 
-async function filterProductsWithOneImage(
-  products: unknown[],
-): Promise<unknown[]> {
-  // Implement the function logic here
+// async function filterProductsWithOneImage(
+//   products: Product[],
+// ): Promise<Product[]> {
+//   // Implement the function logic here
+//   return products.filter((product) => product.images.length > 0).map((product) => {
+//     return {
+//       ...product,
+//       images: [{...product.images[0]}]
+//     }
+//   })
+// }
 
-  return [];
+//optimized
+
+async function filterProductsWithOneImage(
+  products: Product[],
+): Promise<Product[]> {
+  // Implement the function logic here
+  const filteredProducts : Product[] = []
+  for(const product of products){
+    if(product.images.length > 0){
+      filteredProducts.push({
+        ...product,
+        images: [{...product.images[0]}]
+      })
+    }
+  }
+  return filteredProducts
 }
+

@@ -1,3 +1,5 @@
+import { Department, Product } from './1-types';
+import { readJsonFile } from './utils/read-json.util';
 /**
  *  Challenge 5: Get Departments with Product Count
  *
@@ -11,10 +13,61 @@
  * - Add the name of the products in an array called productsNames inside the department object.
  */
 
-async function getDepartmentsWithProductCount(
-  departments: unknown[],
-  products: unknown[],
-): Promise<unknown[]> {
-  // Implement the function logic here
-  return [];
+type DepartmentSummary = {
+  id: number
+  name: string
+  amountOfProducts: number
+  productNames: string[]
 }
+
+
+// async function getDepartmentsWithProductCount(
+//   departments: Department[],
+//   products: Product[],
+// ): Promise<DepartmentSummary[]> {
+//   return departments.map((department) => {
+//     const productsByDepartment = products.filter((product) => product.departmentId === department.id)
+//     return {
+//       id : department.id,
+//       name: department.name,
+//       amountOfProducts: productsByDepartment.length,
+//       productNames: products.map((product) => product.name)
+//     }
+//   })
+// }
+
+
+//optimized using Map
+
+async function getDepartmentsWithProductCount(
+  departments: Department[],
+  products: Product[],
+): Promise<DepartmentSummary[]> {
+  
+  const productNamesByDepartment = new Map<number, string[]>()
+  for(const product of products){
+    const names = [
+      ...(productNamesByDepartment.get(product.departmentId) ?? []),
+      product.name
+    ]
+    productNamesByDepartment.set(product.departmentId, names)
+  }
+
+  return departments.map((department) => {
+    const productNamesFromDepartment = productNamesByDepartment.get(department.id) ?? []
+    return {
+      id : department.id,
+      name: department.name,
+      amountOfProducts: productNamesFromDepartment.length,
+      productNames: productNamesFromDepartment
+    }
+  })
+}
+
+const main = async () => {
+  const departments : Department[] = await readJsonFile<Department>('./data/departments.json')
+  const products : Product[] = await readJsonFile<Product>('./data/products.json')
+  console.log(await getDepartmentsWithProductCount(departments, products))
+}
+
+main()
