@@ -70,9 +70,8 @@ and r.rental_date >= CURRENT_DATE - INTERVAL '10 years'
 select f.title, i.inventory_id from public.film f
 inner join public.inventory i on i.film_id = f.film_id  
 where not exists (
-select 1 from rental r 
-where i.inventory_id = r.inventory_id  
-and r.rental_date >= CURRENT_DATE - INTERVAL '10 years'
+	select 1 from rental r 
+	where i.inventory_id = r.inventory_id
 )
 
 
@@ -166,11 +165,37 @@ having count(distinct(fc.category_id)) < (select count(*) from category)
     Once you finish the exercise, please answer the following questions: 
     
     When would you prefer a materialized view over a regular view? 
+    
+    When the query is very large because it has many joins or the tables have millions of rows, also because the user can't wait 
+    so much time to get a result and having a delay of minutes or hours is acceptable.
+    So, materialized view would be better for scenariso like Reports for Dashboards where is acceptable to have some delay
+
     How often should it be refreshed?
+
+    It depends of much delay the objective of the materialized view can accept, it could be for minutes, hours o even a complete day,
+    the time it takes to complete the query could be used as a reference and it could be done using an automatic process.
+    Also it could be refreshed under some circunstances, maybe some company has a specific period of time where it receives a lot
+    of insertions or updates to a table, so after it finishes could be a good moment to refresh the materializde view
+    In the worst case, it could be refreshed each time the user required, knowing the it could take some time
+
 */
 
 -- your work here
 
+CREATE MATERIALIZED VIEW revenue_by_category AS
+select c.name, sum(p.amount) total_revenue from category c
+inner join film_category fc on fc.category_id = c.category_id 
+inner join inventory i on i.film_id = fc.film_id 
+inner join rental r on r.inventory_id = i.inventory_id 
+inner join payment p on p.rental_id = r.rental_id 
+group by c.category_id ,c.name
+order by total_revenue desc;
 
+
+SELECT * FROM revenue_by_category;
+
+SELECT * FROM revenue_by_category limit 3;
+
+REFRESH MATERIALIZED VIEW revenue_by_category;
 
 
