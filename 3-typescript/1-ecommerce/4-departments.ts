@@ -46,8 +46,10 @@ async function getDepartmentsWithProductCount(
   
   const productNamesByDepartment = new Map<number, string[]>()
   for(const product of products){
-    const names : string[] = productNamesByDepartment.get(product.departmentId) ?? []
-    names.push(product.name)
+    const names = [
+      ...(productNamesByDepartment.get(product.departmentId) ?? []),
+      product.name
+    ]
     productNamesByDepartment.set(product.departmentId, names)
   }
 

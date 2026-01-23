@@ -32,16 +32,35 @@ type ProductAnalysis = {
 }
 
 async function analyzeProductPrices(products: Product[]): Promise<ProductAnalysis> {
-  const totalPrice : number = products.reduce((accu, product) => accu + product.price , 0)
+  if (products.length === 0) {
+    throw new Error("Products array cannot be empty")
+  }
+  let totalPrice = 0
+  let mostExpensiveProduct : Product = products[0];
+  let cheapestProduct : Product = products[0];
+  let onSaleCount = 0
+  let totalDiscount = 0
+  for(const product of products){
+    totalPrice += product.price
+
+    if(mostExpensiveProduct.price < product.price){
+      mostExpensiveProduct = product
+    }
+
+    if(cheapestProduct.price > product.price){
+      cheapestProduct = product
+    }
+
+    if(product.onSale){
+      onSaleCount++;
+      let disccount = ( product.price - product.salePrice ) * 100 / product.price
+      totalDiscount += disccount
+    }
+  }
+
+  const averageDiscount = onSaleCount > 0 ? totalDiscount / onSaleCount : 0
   const averagePrice : number = Number((totalPrice / (products.length)).toFixed(2))
-  const mostExpensiveProduct : Product = products.reduce((expensiveProduct, product) => product.price > expensiveProduct.price ? product : expensiveProduct)
-  const cheapestProduct : Product = products.reduce((expensiveProduct, product) => product.price < expensiveProduct.price ? product : expensiveProduct)
-  const onSaleCount : number = products.filter((product) => product.onSale).length
-  const averageDiscount : number = (
-    products.filter((product) => product.onSale)
-    .map((product) => (product.price - product.salePrice) * 100 / product.price)
-    .reduce((accu, discountPercentage) => accu + discountPercentage, 0)
-  ) / products.length
+
   return {
     totalPrice,
     averagePrice,
@@ -52,12 +71,6 @@ async function analyzeProductPrices(products: Product[]): Promise<ProductAnalysi
   }
 }
 
-// const main1 = async () => {
-//   const products : Product[] = await readJsonFile<Product>('./data/products.json')
-//   console.log(await analyzeProductPrices(products))
-// }
-
-// main1()
 
 
 /**
@@ -99,7 +112,7 @@ async function buildProductCatalog(
   products: Product[],
   brands: Brand[],
 ): Promise<EnrichedProduct[]> {
-  const activeBrandsMap = new Map<number, Omit<Brand, "id" | "isActive">>();
+  const activeBrandsMap = new Map<number, BrandInfo>();
 
   for (const brand of brands) {
     if (brand.isActive) {
@@ -107,23 +120,18 @@ async function buildProductCatalog(
       activeBrandsMap.set(Number(id), brandInfo);
     }
   }
-
-  return products
-    .filter(product => product.isActive && activeBrandsMap.has(product.brandId))
-    .map(product => ({
+  
+  const enrichedProducts : EnrichedProduct[] = [];
+  for(const product of products){
+    if(product.isActive && activeBrandsMap.has(product.brandId))
+    enrichedProducts.push({
       ...product,
       brandInfo: activeBrandsMap.get(product.brandId)! 
-    }));
+    })
+  }
+  return enrichedProducts
 }
 
-
-const main2 = async () => {
-  const products : Product[] = await readJsonFile<Product>('./data/products.json')
-  const brands : Brand[] = await readJsonFile<Brand>('./data/brands.json')
-  console.log(await buildProductCatalog(products, brands))
-}
-
-main2()
 
 /**
  * Challenge 3: One image per product
@@ -169,11 +177,3 @@ async function filterProductsWithOneImage(
   return filteredProducts
 }
 
-
-
-// const main3 = async () => {
-//   const products : Product[] = await readJsonFile<Product>('./data/products.json')
-//   console.log(await filterProductsWithOneImage(products))
-// }
-
-// main3()

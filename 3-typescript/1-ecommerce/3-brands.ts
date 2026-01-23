@@ -43,16 +43,20 @@ async function getCountriesWithBrandsAndProductCount(
 ): Promise<NumberOfProductsByCountry[]> {
 
   const countProductsByBrand = new Map<number, number>()
+
   for(const product of products){
     let countProductByBrand : number = countProductsByBrand.get(product.brandId) ?? 0
     countProductsByBrand.set(product.brandId, countProductByBrand + 1)
   }
 
   const countProductsByCountry = new Map<string, number>()
+  
   for(const brand of brands){
     let countProductByBrand : number = countProductsByBrand.get(Number(brand.id)) ?? 0
     const country = brand.headquarters.split(', ')[1]
+
     if (!country) continue;
+
     let productsByCountry = countProductsByCountry.get(country) ?? 0
     countProductsByCountry.set(country, countProductByBrand + productsByCountry)
   }

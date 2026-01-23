@@ -16,14 +16,20 @@
  * - The use of interfaces and type aliases to create a clear and maintainable structure
  */
 
-import { readJsonFile } from "./utils/read-json.util"
 
 // PRODUCTS JSON
 
 //! Add necessary type definitions for the products json file
 
-type ArchSupport = "Medium to High" | "Medium" | "Low" | "High"
 
+type Image = {
+    id: number,
+    url: string
+    alt: string
+    isMain: boolean
+}
+
+type ArchSupport = "Medium to High" | "Medium" | "Low" | "High"
 
 type OtherSpecification = {
     archSupport?: ArchSupport,
@@ -62,8 +68,8 @@ export type Product = {
     metaTagDescription: string,
     supplierId: number,
     showWithoutStock: boolean,
-    adWordsRemarketingCode?: string | null,
-    lomadeeCampaignCode?: string | null,
+    adWordsRemarketingCode?: string,
+    lomadeeCampaignCode?: string,
     score: number,
     price: number,
     salePrice: number,
@@ -76,17 +82,16 @@ export type Product = {
 }
 
 
-type Image = {
-    id: number,
-    url: string
-    alt: string
-    isMain: boolean
-}
+
 
 // CATEGORIES JSON
 
 //! Add necessary type definitions for the brands json file
 
+type Filter = {
+    name: string,
+    values: string[]
+}
 
 export type Category = {
     id: number,
@@ -102,15 +107,18 @@ export type Category = {
     filters: Filter[]
 }
 
-type Filter = {
-    name: string,
-    values: string[]
-}
+
 
 
 // BRANDS JSON
 
 //! Add necessary type definitions for the brands json file
+
+type SocialMedia = {
+    instagram: string,
+    twitter: string,
+    facebook: string
+}
 
 export type Brand = {
     id: string | number,
@@ -125,11 +133,7 @@ export type Brand = {
     socialMedia: SocialMedia
 }
 
-type SocialMedia = {
-    instagram: string,
-    twitter: string,
-    facebook: string
-}
+
 
 // DEPARTMENTS JSON
 //! Add necessary type definitions for the departments json file
