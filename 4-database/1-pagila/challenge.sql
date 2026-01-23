@@ -11,6 +11,10 @@
 
 -- your query here
 
+select c.name, count(fc.film_id) from public.film_category fc 
+inner join category c on c.category_id = fc.category_id 
+group by c."name"
+
 
  /*
     Challenge 2.
@@ -23,7 +27,12 @@
 
  -- your query here
 
-
+select c.first_name, c.last_name, sum(p.amount) as total_spent
+from public.customer c 
+inner join public.payment p on p.customer_id = c.customer_id 
+group by (c.first_name, c.last_name)
+order by total_spent desc
+limit 5;
 
 
 /*
@@ -38,6 +47,14 @@
 
 -- your query here
 
+select f.title from public.film f
+where exists (
+select * from rental r
+inner join inventory i on r.inventory_id  = i.inventory_id 
+where f.film_id = i.film_id 
+and r.rental_date >= CURRENT_DATE - INTERVAL '10 years'
+)
+
 
 /*
     Challenge 4.
@@ -50,7 +67,12 @@
 
 -- your query here
 
-
+select f.title, i.inventory_id from public.film f
+inner join public.inventory i on i.film_id = f.film_id  
+where not exists (
+	select 1 from rental r 
+	where i.inventory_id = r.inventory_id
+)
 
 
 /*
@@ -65,6 +87,25 @@
 
 -- your query here
 
+select f.title, count(r.rental_id)
+from public.film f 
+inner join inventory i 
+on i.film_id = f.film_id 
+inner join rental r 
+on r.inventory_id = i.inventory_id 
+group by f.film_id , f.title
+having count(r.rental_id) > (
+	select avg(counts.cnt) 
+	from (
+		select count(rental_id) as cnt 
+		from inventory i2 
+		join rental r2 
+		on r2.inventory_id = i2.inventory_id
+		GROUP BY i2.film_id
+	) counts 
+);
+
+
 /*
     Challenge 6.
     Write a SQL query that calculates rental activity for each customer.
@@ -77,6 +118,16 @@
 
 -- your query here
 
+select c.first_name, c.last_name, 
+min(r.rental_date) first_rental, 
+max(r.rental_date) last_rental,
+max(r.rental_date)::date - min(r.rental_date)::date as rental_span_days
+from customer c 
+inner join rental r on r.customer_id = c.customer_id
+group by(c.customer_id, c.first_name, c.last_name)
+order by rental_span_days desc;
+
+
 /*
     Challenge 7.
     Find all customers who have not rented movies from every available genre.
@@ -86,6 +137,14 @@
 
 
 -- your query here
+
+select c.first_name, c.last_name from customer c
+left join rental r on c.customer_id = r.customer_id
+left join inventory i on r.inventory_id = i.inventory_id
+left join film_category fc on i.film_id = fc.film_id 
+group by (c.customer_id, c.first_name, c.last_name)
+having count(distinct(fc.category_id)) < (select count(*) from category)
+
 
 
 /*
@@ -106,11 +165,37 @@
     Once you finish the exercise, please answer the following questions: 
     
     When would you prefer a materialized view over a regular view? 
+    
+    When the query is very large because it has many joins or the tables have millions of rows, also because the user can't wait 
+    so much time to get a result and having a delay of minutes or hours is acceptable.
+    So, materialized view would be better for scenariso like Reports for Dashboards where is acceptable to have some delay
+
     How often should it be refreshed?
+
+    It depends of much delay the objective of the materialized view can accept, it could be for minutes, hours o even a complete day,
+    the time it takes to complete the query could be used as a reference and it could be done using an automatic process.
+    Also it could be refreshed under some circunstances, maybe some company has a specific period of time where it receives a lot
+    of insertions or updates to a table, so after it finishes could be a good moment to refresh the materializde view
+    In the worst case, it could be refreshed each time the user required, knowing the it could take some time
+
 */
 
 -- your work here
 
+CREATE MATERIALIZED VIEW revenue_by_category AS
+select c.name, sum(p.amount) total_revenue from category c
+inner join film_category fc on fc.category_id = c.category_id 
+inner join inventory i on i.film_id = fc.film_id 
+inner join rental r on r.inventory_id = i.inventory_id 
+inner join payment p on p.rental_id = r.rental_id 
+group by c.category_id ,c.name
+order by total_revenue desc;
 
+
+SELECT * FROM revenue_by_category;
+
+SELECT * FROM revenue_by_category limit 3;
+
+REFRESH MATERIALIZED VIEW revenue_by_category;
 
 
